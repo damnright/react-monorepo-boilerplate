@@ -1,0 +1,36 @@
+{
+  "name": "react-monorepo-boilerplate",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server",
+    "common"
+  ],
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "start": "pnpm run build && cross-env NODE_ENV=production node server/dist/index.js",
+    "build": "pnpm run build:common && pnpm run build:client && pnpm run build:server",
+    "build:client": "pnpm --filter client build:alone",
+    "build:server": "pnpm --filter server build:alone",
+    "build:common": "pnpm --filter common build",
+    "dev": "concurrently --names \"COMMON,CLIENT,SERVER\" --prefix-colors \"yellow,green,blue\" --kill-others  \"pnpm run dev:common\" \"pnpm run dev:client\" \"pnpm run dev:server\"",
+    "dev:client": "pnpm --filter client dev:alone",
+    "dev:server": "pnpm --filter server dev:alone",
+    "dev:common": "pnpm --filter common watch",
+    "install:server": "pnpm --filter server install",
+    "install:client": "pnpm --filter client install",
+    "install:common": "pnpm --filter common install",
+    "install": "pnpm install",
+    "docker:prod": "docker compose -f compose.yml up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3"
+  }
+}

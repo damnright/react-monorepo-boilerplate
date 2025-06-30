@@ -1,0 +1,28 @@
+{
+  "name": "@fullstack/common",
+  "type": "module",
+  "packageManager": "pnpm@9.15.2",
+  "engines": {
+    "node": ">=20.19.0",
+    "pnpm": ">=9.0.0"
+  },
+  "description": "Shared types and DTOs for PortalOne projects",
+  "scripts": {
+    "build": "tsc --build",
+    "build:force": "tsc --build --force",
+    "watch": "tsc --build --watch",
+    "clean": "tsc --build --clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  }
+}
