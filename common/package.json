@@ -13,6 +13,9 @@
     "watch": "tsc --build --watch",
     "clean": "tsc --build --clean"
   },
+  "dependencies": {
+    "zod": "^3.25.67"
+  },
   "devDependencies": {
     "typescript": "^5.8.3"
   },
