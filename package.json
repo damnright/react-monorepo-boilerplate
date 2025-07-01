@@ -25,8 +25,10 @@
     "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
+    "@eslint/js": "^9.30.0",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
+    "globals": "^16.2.0",
     "rimraf": "^6.0.1"
   }
 }

@@ -1,18 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { api } from '@/lib/api';
+import { api, authAPI } from '@/lib/api';
 import React from 'react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-  avatar?: string;
-}
+import type { UserInfo, LoginDTO, RegisterDTO } from 'common';
 
 interface AuthState {
-  user: User | null;
+  user: UserInfo | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
@@ -20,12 +13,12 @@ interface AuthState {
 }
 
 interface AuthActions {
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (data: LoginDTO) => Promise<void>;
+  register: (data: RegisterDTO) => Promise<void>;
   logout: () => void;
   clearError: () => void;
   checkAuth: () => Promise<void>;
-  updateUser: (userData: Partial<User>) => void;
+  updateUser: (userData: Partial<UserInfo>) => void;
 }
 
 const useAuthStore = create<AuthState & AuthActions>()(
@@ -39,16 +32,11 @@ const useAuthStore = create<AuthState & AuthActions>()(
       isAuthenticated: false,
 
       // Actions
-      login: async (email: string, password: string, rememberMe = false) => {
+      login: async (data: LoginDTO) => {
         set({ isLoading: true, error: null });
         
         try {
-          const response = await api.post('/auth/login', {
-            email,
-            password,
-            rememberMe,
-          });
-
+          const response = await authAPI.login(data);
           const { user, token } = response.data;
           
           set({
@@ -70,16 +58,11 @@ const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
-      register: async (name: string, email: string, password: string) => {
+      register: async (data: RegisterDTO) => {
         set({ isLoading: true, error: null });
         
         try {
-          const response = await api.post('/auth/register', {
-            name,
-            email,
-            password,
-          });
-
+          const response = await authAPI.register(data);
           const { user, token } = response.data;
           
           set({
@@ -130,7 +113,7 @@ const useAuthStore = create<AuthState & AuthActions>()(
           // 设置API header
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          const response = await api.get('/auth/me');
+          const response = await authAPI.me();
           const user = response.data;
 
           set({
@@ -152,7 +135,7 @@ const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
-      updateUser: (userData: Partial<User>) => {
+      updateUser: (userData: Partial<UserInfo>) => {
         const { user } = get();
         if (user) {
           set({ user: { ...user, ...userData } });
@@ -173,8 +156,12 @@ const useAuthStore = create<AuthState & AuthActions>()(
 export const useAuth = () => {
   const authState = useAuthStore();
 
-  // 初始化时检查认证状态
+  // 初始化时检查认证状态和设置token
   React.useEffect(() => {
+    const { token } = authState;
+    if (token) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
     authState.checkAuth();
   }, []);
 

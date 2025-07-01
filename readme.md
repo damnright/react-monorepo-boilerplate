@@ -325,8 +325,126 @@ pnpm --filter client test:debug
    pnpm build
    ```
 
+# 环境变量配置指南
+
+本项目需要配置环境变量文件才能正常运行。请按照以下步骤配置：
+
+## 1. 复制环境变量模板
+
+### 根目录
+```bash
+cp .env.example .env
+```
+
+### 客户端
+```bash
+cp client/.env.example client/.env
+cp client/.env.example client/.env.production
+```
+
+### 服务端
+```bash
+cp server/.env.example server/.env
+cp server/.env.example server/.env.production
+```
+
+## 2. 环境变量说明
+
+### Client 环境变量 (`client/.env`)
+```bash
+# API配置
+VITE_API_URL=http://localhost:5055/api
+
+# 应用配置
+VITE_APP_TITLE=React Monorepo Boilerplate
+VITE_APP_VERSION=1.0.0
+
+# 开发配置
+VITE_PORT=5173
+VITE_API_PROXY_TARGET=http://localhost:5055
+```
+
+### Server 环境变量 (`server/.env`)
+```bash
+# 应用配置
+NODE_ENV=development
+PORT=5055
+HOST=localhost
+
+# 数据库配置
+DATABASE_URL="mongodb://localhost:27017/react-monorepo"
+
+# JWT配置
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=24h
+
+# CORS配置
+CORS_ORIGIN=http://localhost:5173
+
+# 日志配置
+LOG_LEVEL=info
+
+# Sentry配置 (可选)
+# SENTRY_DSN=your-sentry-dsn
+```
+
+## 3. 生产环境配置
+
+### Client 生产环境 (`client/.env.production`)
+```bash
+# API配置
+VITE_API_URL=https://your-api-domain.com/api
+
+# 应用配置
+VITE_APP_TITLE=React Monorepo Boilerplate
+VITE_APP_VERSION=1.0.0
+```
+
+### Server 生产环境 (`server/.env.production`)
+```bash
+# 应用配置
+NODE_ENV=production
+PORT=5055
+HOST=0.0.0.0
+
+# 数据库配置
+DATABASE_URL="mongodb://your-mongo-host:27017/react-monorepo-prod"
+
+# JWT配置
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=24h
+
+# CORS配置
+CORS_ORIGIN=https://your-frontend-domain.com
+
+# 日志配置
+LOG_LEVEL=warn
+
+# Sentry配置 (推荐在生产环境使用)
+# SENTRY_DSN=your-sentry-dsn
+```
+
+## 4. 重要提醒
+
+- ⚠️ **不要将 `.env` 文件提交到 Git**
+- 🔒 **生产环境请务必修改 JWT_SECRET**
+- 🔧 **根据实际情况修改数据库连接字符串**
+- 🌐 **生产环境请配置正确的域名和 CORS 设置**
+
+## 5. 快速设置脚本
+
+如果你想快速设置开发环境，可以运行：
+
+```bash
+# 设置开发环境
+npm run setup:dev
+
+# 设置生产环境
+npm run setup:prod
+```
+
 ## 📞 联系方式
 
 如有问题或建议，请通过以下方式联系：
-- 创建 [Issue](https://github.com/your-username/react-monorepo-boilerplate/issues)
-- 发送邮件到: your-email@example.com
+- 创建 [Issue](https://github.com/damnright/react-monorepo-boilerplate/issues)
+- 发送邮件到: qq287649920@gmail.com

@@ -38,6 +38,7 @@
     "axios": "^1.10.0",
     "chart.js": "^4.4.7",
     "clsx": "^2.1.1",
+    "common": "workspace:*",
     "dayjs": "^1.11.13",
     "immer": "^10.1.1",
     "lodash": "^4.17.21",

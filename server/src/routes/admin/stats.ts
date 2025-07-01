@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import { prisma } from '../../utils/prisma.js';
+import { HttpStatusCode, ErrorCodes, type StatsResponse, type ChartResponse } from 'common';
 
 const statsRoute: FastifyPluginAsync = async (fastify) => {
   fastify.get('/stats', {
@@ -100,7 +101,7 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
         const totalMemory = memoryUsage.heapTotal;
         const usedMemory = memoryUsage.heapUsed;
 
-        return reply.send({
+        const response: StatsResponse = {
           users: {
             total: totalUsers,
             active: activeUsers,
@@ -113,8 +114,13 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
             recentActivities: recentActivities.map(activity => ({
               id: activity.id,
               type: activity.action,
-              description: activity.description,
-              user: activity.user,
+              description: activity.description || '无描述',
+              metadata: activity.metadata as Record<string, any>,
+              user: {
+                id: activity.user.id,
+                name: activity.user.name || '未知用户',
+                email: '', // 不暴露email在活动记录中
+              },
               createdAt: activity.createdAt.toISOString(),
             })),
           },
@@ -126,11 +132,13 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
               percentage: Math.round((usedMemory / totalMemory) * 100),
             },
           },
-        });
+        };
+
+        return reply.send(response);
       } catch (error) {
         request.log.error(error);
-        return reply.status(500).send({
-          error: 'INTERNAL_ERROR',
+        return reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
+          error: ErrorCodes.INTERNAL_ERROR,
           message: '获取统计数据失败',
         });
       }
@@ -266,14 +274,16 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
           ];
         }
 
-        return reply.send({
+        const response: ChartResponse = {
           labels,
           datasets,
-        });
+        };
+
+        return reply.send(response);
       } catch (error) {
         request.log.error(error);
-        return reply.status(500).send({
-          error: 'INTERNAL_ERROR',
+        return reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
+          error: ErrorCodes.INTERNAL_ERROR,
           message: '获取图表数据失败',
         });
       }

@@ -10,8 +10,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@fullstack/common": ["../common/dist"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src", "vite.config.ts"],

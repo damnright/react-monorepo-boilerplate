@@ -17,6 +17,9 @@ import {
   Legend,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import { useQuery } from '@tanstack/react-query';
+import { adminAPI } from '@/lib/api';
+import type { StatsResponse, ChartResponse } from 'common';
 
 ChartJS.register(
   CategoryScale,
@@ -29,26 +32,23 @@ ChartJS.register(
 );
 
 export function AdminStats() {
-  // Mock data - 实际应用中从API获取
-  const chartData = {
-    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
-    datasets: [
-      {
-        label: '用户注册数',
-        data: [65, 59, 80, 81, 56, 55],
-        fill: false,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1,
-      },
-      {
-        label: '活跃用户数',
-        data: [45, 39, 60, 61, 36, 35],
-        fill: false,
-        borderColor: 'rgb(255, 99, 132)',
-        tension: 0.1,
-      },
-    ],
-  };
+  // 获取统计数据
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['admin', 'stats'],
+    queryFn: async () => {
+      const response = await adminAPI.getStats();
+      return response.data;
+    },
+  });
+
+  // 获取图表数据
+  const { data: chartData, isLoading: chartLoading } = useQuery({
+    queryKey: ['admin', 'chart', 'users', '7d'],
+    queryFn: async () => {
+      const response = await adminAPI.getChartData('users', '7d');
+      return response.data;
+    },
+  });
 
   const chartOptions = {
     responsive: true,
@@ -63,22 +63,79 @@ export function AdminStats() {
     },
   };
 
-  const systemStats = [
-    { label: 'CPU 使用率', value: 45, color: 'primary' },
-    { label: '内存使用率', value: 67, color: 'warning' },
-    { label: '磁盘使用率', value: 23, color: 'success' },
-    { label: '网络带宽', value: 89, color: 'error' },
-  ];
+  const systemStats = statsData ? [
+    { 
+      label: '内存使用率', 
+      value: statsData.system.memoryUsage.percentage, 
+      color: statsData.system.memoryUsage.percentage > 80 ? 'error' : 
+             statsData.system.memoryUsage.percentage > 60 ? 'warning' : 'success'
+    },
+    { 
+      label: '运行时间', 
+      value: Math.min(Math.round(statsData.system.uptime / 3600), 100), 
+      color: 'primary' 
+    },
+  ] : [];
+
+  if (statsLoading || chartLoading) {
+    return <Typography>加载中...</Typography>;
+  }
 
   return (
     <Box>
+      {/* User Stats Cards */}
+      {statsData && (
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 2, mb: 3 }}>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                总用户数
+              </Typography>
+              <Typography variant="h4">
+                {statsData.users.total}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                活跃用户
+              </Typography>
+              <Typography variant="h4">
+                {statsData.users.active}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                管理员
+              </Typography>
+              <Typography variant="h4">
+                {statsData.users.admins}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent>
+              <Typography color="textSecondary" gutterBottom>
+                本月新增
+              </Typography>
+              <Typography variant="h4">
+                {statsData.users.newThisMonth}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+      )}
+
       {/* Chart */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             数据趋势分析
           </Typography>
-          <Line data={chartData} options={chartOptions} />
+          {chartData && <Line data={chartData} options={chartOptions} />}
         </CardContent>
       </Card>
 

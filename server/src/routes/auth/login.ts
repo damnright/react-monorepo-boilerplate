@@ -3,19 +3,20 @@ import { Static, Type } from '@sinclair/typebox';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../../utils/jwt.js';
 import { prisma } from '../../utils/prisma.js';
-
-const LoginSchema = Type.Object({
-  email: Type.String({ format: 'email' }),
-  password: Type.String({ minLength: 6 }),
-  rememberMe: Type.Optional(Type.Boolean()),
-});
-
-type LoginBody = Static<typeof LoginSchema>;
+import { LoginDTOSchema, ErrorCodes, HttpStatusCode, type LoginDTO, type AuthResponse } from 'common';
 
 const loginRoute: FastifyPluginAsync = async (fastify) => {
-  fastify.post<{ Body: LoginBody }>('/login', {
+  fastify.post<{ Body: LoginDTO }>('/login', {
     schema: {
-      body: LoginSchema,
+      body: {
+        type: 'object',
+        properties: {
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 6 },
+          rememberMe: { type: 'boolean' },
+        },
+        required: ['email', 'password'],
+      },
       response: {
         200: Type.Object({
           user: Type.Object({
@@ -24,7 +25,9 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
             email: Type.String(),
             role: Type.Union([Type.Literal('admin'), Type.Literal('user')]),
             avatar: Type.Optional(Type.String()),
+            status: Type.Union([Type.Literal('active'), Type.Literal('inactive')]),
             createdAt: Type.String(),
+            updatedAt: Type.String(),
           }),
           token: Type.String(),
         }),
@@ -37,6 +40,17 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
           message: Type.String(),
         }),
       },
+    },
+    preHandler: async (request, reply) => {
+      // 使用common包的schema验证
+      try {
+        LoginDTOSchema.parse(request.body);
+      } catch (error: any) {
+        return reply.status(HttpStatusCode.BAD_REQUEST).send({
+          error: ErrorCodes.INVALID_CREDENTIALS,
+          message: '请求参数错误',
+        });
+      }
     },
     handler: async (request, reply) => {
       const { email, password, rememberMe = false } = request.body;
@@ -58,16 +72,16 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         });
 
         if (!user) {
-          return reply.status(401).send({
-            error: 'INVALID_CREDENTIALS',
+          return reply.status(HttpStatusCode.UNAUTHORIZED).send({
+            error: ErrorCodes.INVALID_CREDENTIALS,
             message: '邮箱或密码错误',
           });
         }
 
         // 检查账户状态
         if (!user.isActive) {
-          return reply.status(401).send({
-            error: 'ACCOUNT_DISABLED',
+          return reply.status(HttpStatusCode.UNAUTHORIZED).send({
+            error: ErrorCodes.UNAUTHORIZED,
             message: '账户已被禁用',
           });
         }
@@ -75,8 +89,8 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         // 验证密码
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-          return reply.status(401).send({
-            error: 'INVALID_CREDENTIALS',
+          return reply.status(HttpStatusCode.UNAUTHORIZED).send({
+            error: ErrorCodes.INVALID_CREDENTIALS,
             message: '邮箱或密码错误',
           });
         }
@@ -105,17 +119,24 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         // 返回用户信息和token
         const { password: _, ...userWithoutPassword } = user;
         
-        return reply.send({
+        const response: AuthResponse = {
           user: {
             ...userWithoutPassword,
+            name: user.name || '未知用户',
+            role: user.role.toLowerCase() as 'user' | 'admin',
+            status: user.isActive ? 'active' : 'inactive',
+            avatar: user.avatar || undefined,
             createdAt: user.createdAt.toISOString(),
+            updatedAt: user.createdAt.toISOString(), // 使用createdAt作为updatedAt
           },
           token,
-        });
+        };
+        
+        return reply.send(response);
       } catch (error) {
         request.log.error(error);
-        return reply.status(500).send({
-          error: 'INTERNAL_ERROR',
+        return reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
+          error: ErrorCodes.INTERNAL_ERROR,
           message: '服务器内部错误',
         });
       }

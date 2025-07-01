@@ -18,31 +18,24 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import { UserForm } from '@/components/admin/UserForm';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-  status: 'active' | 'inactive';
-  createdAt: string;
-}
+import type { UserInfo } from 'common';
 
 export default function UsersPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
 
   // Mock data - 在实际应用中这些数据来自API
-  const users: User[] = [
+  const users: UserInfo[] = [
     {
       id: '1',
       name: '张三',
       email: 'zhangsan@example.com',
       role: 'admin',
       status: 'active',
-      createdAt: '2024-01-15',
+      createdAt: '2024-01-15T10:00:00Z',
+      updatedAt: '2024-01-15T10:00:00Z',
     },
     {
       id: '2',
@@ -50,12 +43,13 @@ export default function UsersPage() {
       email: 'lisi@example.com',
       role: 'user',
       status: 'active',
-      createdAt: '2024-01-16',
+      createdAt: '2024-01-16T10:00:00Z',
+      updatedAt: '2024-01-16T10:00:00Z',
     },
     // 更多用户数据...
   ];
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: UserInfo) => {
     setSelectedUser(user);
     setOpenDialog(true);
   };
@@ -127,7 +121,7 @@ export default function UsersPage() {
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>{user.createdAt}</TableCell>
+                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell align="right">
                       <IconButton
                         size="small"

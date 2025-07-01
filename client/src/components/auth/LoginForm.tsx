@@ -1,7 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Box,
   TextField,
@@ -14,14 +13,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
 import { useAuth } from '@/hooks/useAuth';
-
-const loginSchema = z.object({
-  email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string().min(6, '密码至少6位'),
-  rememberMe: z.boolean().optional(),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { LoginDTOSchema, type LoginDTO } from 'common';
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -31,13 +23,13 @@ export function LoginForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<LoginDTO>({
+    resolver: zodResolver(LoginDTOSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginDTO) => {
     try {
-      await login(data.email, data.password, data.rememberMe);
+      await login(data);
     } catch (err) {
       // 错误处理由useAuth hook处理
     }

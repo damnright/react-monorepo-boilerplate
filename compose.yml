@@ -1,66 +1,145 @@
-version: '3.8'
-
 services:
-  # 数据库服务 - 需要持续运行
+  # =============================================================================
+  # 数据库服务 - MongoDB
+  # =============================================================================
   mongodb:
-    image: mongo:7
+    image: mongo:7-jammy
     restart: unless-stopped
     container_name: ezboard-mongodb
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongodb_data:/data/db
-      - ./docker/mongo-init:/docker-entrypoint-initdb.d
+      - mongodb_logs:/var/log/mongodb
+      - ./docker/mongo-init:/docker-entrypoint-initdb.d:ro
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USERNAME:-admin}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password}
       - MONGO_INITDB_DATABASE=${MONGO_DB_NAME:-ezboard}
+      - MONGO_APP_USERNAME=${MONGO_APP_USERNAME:-appuser}
+      - MONGO_APP_PASSWORD=${MONGO_APP_PASSWORD:-apppassword}
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # 后端应用服务 - 需要持续运行
+  # =============================================================================
+  # 后端应用服务 - Node.js/Fastify
+  # =============================================================================
   backend:
     build: 
       context: .
       dockerfile: Dockerfile
+      target: production
     restart: unless-stopped
     container_name: ezboard-backend
     ports:
-      - "5055:5055"
+      - "${SERVER_PORT:-5055}:5055"
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=mongodb://mongodb:27017/${MONGO_DB_NAME:-ezboard}
+      # 基础配置
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=5055
+      
+      # 数据库配置
+      - DATABASE_URL=mongodb://${MONGO_APP_USERNAME:-appuser}:${MONGO_APP_PASSWORD:-apppassword}@mongodb:27017/${MONGO_DB_NAME:-ezboard}?authSource=${MONGO_DB_NAME:-ezboard}
+      
+      # JWT配置
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
+      
+      # CORS配置
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000,https://ezboard.net}
+      
+      # 文件上传配置
+      - UPLOAD_PATH=${UPLOAD_PATH:-/app/uploads}
+      - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
+      
+      # 日志配置
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      
+      # 安全配置
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-900000}
+      
+      # 功能开关
+      - ENABLE_SWAGGER=${ENABLE_SWAGGER:-false}
+      - ENABLE_RATE_LIMIT=${ENABLE_RATE_LIMIT:-true}
     volumes:
-      - ./server/.env.production:/app/server/.env.production:ro
+      - uploads_data:/app/uploads
+      - app_logs:/app/logs
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5055/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
-  # Nginx 反向代理 - 需要持续运行
+  # =============================================================================
+  # 前端代理服务 - Nginx
+  # =============================================================================
   nginx:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nginx
     restart: unless-stopped
     container_name: ezboard-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
     volumes:
+      # Nginx配置
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./docker/ssl:/etc/nginx/ssl:ro  # SSL证书目录
+      - ./docker/ssl:/etc/nginx/ssl:ro
+      
+      # 日志
       - nginx_logs:/var/log/nginx
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+# =============================================================================
+# 数据卷配置
+# =============================================================================
 volumes:
+  # 数据库数据
   mongodb_data:
     driver: local
+  mongodb_logs:
+    driver: local
+    
+  # 应用数据
+  uploads_data:
+    driver: local
+  app_logs:
+    driver: local
+    
+  # Nginx日志
   nginx_logs:
     driver: local
 
+# =============================================================================
+# 网络配置
+# =============================================================================
 networks:
   app-network:
-    driver: bridge 
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

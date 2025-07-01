@@ -14,23 +14,19 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock, Person } from '@mui/icons-material';
 import { useAuth } from '@/hooks/useAuth';
+import { RegisterDTOSchema, type RegisterDTO } from 'common';
 
-const registerSchema = z
-  .object({
-    name: z.string().min(2, '姓名至少2个字符'),
-    email: z.string().email('请输入有效的邮箱地址'),
-    password: z.string().min(6, '密码至少6位'),
-    confirmPassword: z.string(),
-    agreeToTerms: z.boolean().refine((val) => val === true, {
-      message: '请同意服务条款',
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: '两次输入的密码不一致',
-    path: ['confirmPassword'],
-  });
+const registerFormSchema = RegisterDTOSchema.extend({
+  confirmPassword: z.string(),
+  agreeToTerms: z.boolean().refine((val) => val === true, {
+    message: '请同意服务条款',
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: '两次输入的密码不一致',
+  path: ['confirmPassword'],
+});
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+type RegisterFormData = z.infer<typeof registerFormSchema>;
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = React.useState(false);
@@ -42,12 +38,17 @@ export function RegisterForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerFormSchema),
   });
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await registerUser(data.name, data.email, data.password);
+      const registerData: RegisterDTO = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      };
+      await registerUser(registerData);
     } catch (err) {
       // 错误处理由useAuth hook处理
     }

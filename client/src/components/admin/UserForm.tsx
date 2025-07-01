@@ -17,28 +17,17 @@ import {
   Box,
   Alert,
 } from '@mui/material';
+import { UpdateUserDTOSchema, type UserInfo, type UpdateUserDTO } from 'common';
 
-const userSchema = z.object({
-  name: z.string().min(2, '姓名至少2个字符'),
+const userFormSchema = UpdateUserDTOSchema.extend({
   email: z.string().email('请输入有效的邮箱地址'),
-  role: z.enum(['admin', 'user']),
-  status: z.enum(['active', 'inactive']),
   password: z.string().min(6, '密码至少6位').optional(),
 });
 
-type UserFormData = z.infer<typeof userSchema>;
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-  status: 'active' | 'inactive';
-  createdAt: string;
-}
+type UserFormData = z.infer<typeof userFormSchema>;
 
 interface UserFormProps {
-  user?: User | null;
+  user?: UserInfo | null;
   onSave: (data: UserFormData) => void;
   onClose: () => void;
 }
@@ -54,7 +43,7 @@ export function UserForm({ user, onSave, onClose }: UserFormProps) {
     watch,
     setValue,
   } = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(userFormSchema),
     defaultValues: user
       ? {
           name: user.name,

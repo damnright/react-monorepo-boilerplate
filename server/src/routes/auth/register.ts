@@ -3,19 +3,20 @@ import { Static, Type } from '@sinclair/typebox';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../../utils/jwt.js';
 import { prisma } from '../../utils/prisma.js';
-
-const RegisterSchema = Type.Object({
-  name: Type.String({ minLength: 2, maxLength: 50 }),
-  email: Type.String({ format: 'email' }),
-  password: Type.String({ minLength: 6 }),
-});
-
-type RegisterBody = Static<typeof RegisterSchema>;
+import { RegisterDTOSchema, ErrorCodes, HttpStatusCode, type RegisterDTO, type AuthResponse } from 'common';
 
 const registerRoute: FastifyPluginAsync = async (fastify) => {
-  fastify.post<{ Body: RegisterBody }>('/register', {
+  fastify.post<{ Body: RegisterDTO }>('/register', {
     schema: {
-      body: RegisterSchema,
+      body: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', minLength: 2, maxLength: 50 },
+          email: { type: 'string', format: 'email' },
+          password: { type: 'string', minLength: 6 },
+        },
+        required: ['name', 'email', 'password'],
+      },
       response: {
         201: Type.Object({
           user: Type.Object({
@@ -24,7 +25,9 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
             email: Type.String(),
             role: Type.Union([Type.Literal('admin'), Type.Literal('user')]),
             avatar: Type.Optional(Type.String()),
+            status: Type.Union([Type.Literal('active'), Type.Literal('inactive')]),
             createdAt: Type.String(),
+            updatedAt: Type.String(),
           }),
           token: Type.String(),
         }),
@@ -37,6 +40,17 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
           message: Type.String(),
         }),
       },
+    },
+    preHandler: async (request, reply) => {
+      // 使用common包的schema验证
+      try {
+        RegisterDTOSchema.parse(request.body);
+      } catch (error: any) {
+        return reply.status(HttpStatusCode.BAD_REQUEST).send({
+          error: ErrorCodes.INVALID_CREDENTIALS,
+          message: '请求参数错误',
+        });
+      }
     },
     handler: async (request, reply) => {
       const { name, email, password } = request.body;
@@ -100,25 +114,32 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
           role: result.role.toLowerCase() as 'user' | 'admin',
         });
 
-        return reply.status(201).send({
+        const response: AuthResponse = {
           user: {
             ...result,
+            name: result.name || '未知用户',
+            role: result.role.toLowerCase() as 'user' | 'admin',
+            status: 'active',
+            avatar: result.avatar || undefined,
             createdAt: result.createdAt.toISOString(),
+            updatedAt: result.createdAt.toISOString(),
           },
           token,
-        });
+        };
+
+        return reply.status(HttpStatusCode.CREATED).send(response);
       } catch (error: any) {
         request.log.error(error);
 
         if (error.message === 'EMAIL_EXISTS') {
-          return reply.status(409).send({
-            error: 'EMAIL_EXISTS',
+          return reply.status(HttpStatusCode.CONFLICT).send({
+            error: ErrorCodes.INVALID_CREDENTIALS,
             message: '该邮箱已被注册',
           });
         }
 
-        return reply.status(500).send({
-          error: 'INTERNAL_ERROR',
+        return reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
+          error: ErrorCodes.INTERNAL_ERROR,
           message: '服务器内部错误',
         });
       }

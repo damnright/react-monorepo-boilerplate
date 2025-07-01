@@ -3,10 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./",
-    "paths": {
-      "@fullstack/common": ["../common/dist"]
-    }
+    "baseUrl": "./"
   },
   "include": ["src"],
   "exclude": ["dist"]

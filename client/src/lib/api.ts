@@ -1,4 +1,17 @@
 import axios from 'axios';
+import type { 
+  LoginDTO, 
+  RegisterDTO, 
+  UserQueryDTO, 
+  ActivityQueryDTO,
+  UserInfo,
+  AuthResponse,
+  PaginatedResponse,
+  StatsResponse,
+  SystemInfoResponse,
+  ChartResponse,
+  ApiResponse
+} from 'common';
 
 // 创建axios实例
 export const api = axios.create({
@@ -39,43 +52,49 @@ api.interceptors.response.use(
 
 // API 方法
 export const authAPI = {
-  login: (email: string, password: string, rememberMe?: boolean) =>
-    api.post('/auth/login', { email, password, rememberMe }),
+  login: (data: LoginDTO) =>
+    api.post<AuthResponse>('/auth/login', data),
   
-  register: (name: string, email: string, password: string) =>
-    api.post('/auth/register', { name, email, password }),
+  register: (data: RegisterDTO) =>
+    api.post<AuthResponse>('/auth/register', data),
   
   logout: () => api.post('/auth/logout'),
   
-  me: () => api.get('/auth/me'),
+  me: () => api.get<UserInfo>('/auth/me'),
   
   refreshToken: () => api.post('/auth/refresh'),
 };
 
 export const userAPI = {
-  getUsers: (params?: { page?: number; limit?: number; role?: string; status?: string }) =>
-    api.get('/users', { params }),
+  getUsers: (params?: UserQueryDTO) =>
+    api.get<PaginatedResponse<UserInfo>>('/users', { params }),
   
-  getUser: (id: string) => api.get(`/users/${id}`),
+  getUser: (id: string) => 
+    api.get<UserInfo>(`/users/${id}`),
   
-  createUser: (userData: any) => api.post('/users', userData),
+  createUser: (userData: Partial<UserInfo>) => 
+    api.post<UserInfo>('/users', userData),
   
-  updateUser: (id: string, userData: any) => api.put(`/users/${id}`, userData),
+  updateUser: (id: string, userData: Partial<UserInfo>) => 
+    api.put<UserInfo>(`/users/${id}`, userData),
   
-  deleteUser: (id: string) => api.delete(`/users/${id}`),
+  deleteUser: (id: string) => 
+    api.delete(`/users/${id}`),
   
   changePassword: (id: string, oldPassword: string, newPassword: string) =>
     api.put(`/users/${id}/password`, { oldPassword, newPassword }),
 };
 
 export const adminAPI = {
-  getStats: () => api.get('/admin/stats'),
+  getStats: () => 
+    api.get<StatsResponse>('/admin/stats'),
   
-  getActivities: (params?: { page?: number; limit?: number }) =>
-    api.get('/admin/activities', { params }),
+  getActivities: (params?: ActivityQueryDTO) =>
+    api.get<PaginatedResponse<any>>('/admin/activities', { params }),
   
-  getSystemInfo: () => api.get('/admin/system'),
+  getSystemInfo: () => 
+    api.get<SystemInfoResponse>('/admin/system'),
   
   getChartData: (type: string, period: string) =>
-    api.get(`/admin/charts/${type}`, { params: { period } }),
+    api.get<ChartResponse>(`/admin/charts/${type}`, { params: { period } }),
 }; 
