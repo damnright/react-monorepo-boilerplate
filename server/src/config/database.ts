@@ -1,10 +1,11 @@
 import { MongoClient } from 'mongodb';
+import type { FastifyBaseLogger } from 'fastify';
 
 const MONGODB_URI = process.env.DATABASE_URL || 'mongodb://localhost:27017/fullstack-app';
 
 let client: MongoClient;
 
-export async function connectToDatabase() {
+export async function connectToDatabase(logger?: FastifyBaseLogger) {
   try {
     if (!client) {
       client = new MongoClient(MONGODB_URI, {
@@ -23,23 +24,23 @@ export async function connectToDatabase() {
     }
 
     await client.connect();
-    console.log('✅ Connected to MongoDB');
+    logger?.info('✅ Connected to MongoDB') || console.log('✅ Connected to MongoDB');
     
     // 测试连接
     await client.db().admin().ping();
-    console.log('✅ MongoDB ping successful');
+    logger?.info('✅ MongoDB ping successful') || console.log('✅ MongoDB ping successful');
     
     return client;
   } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error);
+    logger?.error('❌ Failed to connect to MongoDB:', error) || console.error('❌ Failed to connect to MongoDB:', error);
     throw error;
   }
 }
 
-export async function disconnectFromDatabase() {
+export async function disconnectFromDatabase(logger?: FastifyBaseLogger) {
   if (client) {
     await client.close();
-    console.log('✅ Disconnected from MongoDB');
+    logger?.info('✅ Disconnected from MongoDB') || console.log('✅ Disconnected from MongoDB');
   }
 }
 
@@ -52,7 +53,7 @@ export function getDatabase() {
 }
 
 // 创建索引（用于优化查询性能）
-export async function createIndexes() {
+export async function createIndexes(logger?: FastifyBaseLogger) {
   try {
     const db = getDatabase();
     
@@ -72,22 +73,22 @@ export async function createIndexes() {
       { key: { userId: 1, createdAt: -1 } },
     ]);
 
-    console.log('✅ Database indexes created successfully');
+    logger?.info('✅ Database indexes created successfully') || console.log('✅ Database indexes created successfully');
   } catch (error) {
-    console.error('❌ Failed to create database indexes:', error);
+    logger?.error('❌ Failed to create database indexes:', error) || console.error('❌ Failed to create database indexes:', error);
   }
 }
 
 // 检查副本集状态（MongoDB事务需要副本集）
-export async function checkReplicaSetStatus() {
+export async function checkReplicaSetStatus(logger?: FastifyBaseLogger) {
   try {
     const db = getDatabase();
     const status = await db.admin().command({ replSetGetStatus: 1 });
-    console.log('✅ Replica set status:', status.set);
+    logger?.info('✅ Replica set status: ' + status.set) || console.log('✅ Replica set status:', status.set);
     return true;
-  } catch (error) {
-    console.warn('⚠️  Replica set not configured. Transactions will not be available.');
-    console.warn('   To enable transactions, configure MongoDB as a replica set.');
+  } catch (_error) {
+    logger?.warn('⚠️  Replica set not configured. Transactions will not be available.') || console.warn('⚠️  Replica set not configured. Transactions will not be available.');
+    logger?.warn('   To enable transactions, configure MongoDB as a replica set.') || console.warn('   To enable transactions, configure MongoDB as a replica set.');
     return false;
   }
 } 

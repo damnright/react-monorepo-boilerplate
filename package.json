@@ -12,23 +12,27 @@
     "build:client": "pnpm --filter client build:alone",
     "build:server": "pnpm --filter server build:alone",
     "build:common": "pnpm --filter common build",
-    "dev": "concurrently --names \"COMMON,CLIENT,SERVER\" --prefix-colors \"yellow,green,blue\" --kill-others  \"pnpm run dev:common\" \"pnpm run dev:client\" \"pnpm run dev:server\"",
+    "dev": "concurrently --names \"COMMON,CLIENT,SERVER\" --prefix-colors \"yellow,green,blue\" --kill-others \"pnpm run dev:common\" \"pnpm run dev:client\" \"pnpm run dev:server\"",
     "dev:client": "pnpm --filter client dev:alone",
     "dev:server": "pnpm --filter server dev:alone",
     "dev:common": "pnpm --filter common watch",
-    "install:server": "pnpm --filter server install",
-    "install:client": "pnpm --filter client install",
-    "install:common": "pnpm --filter common install",
-    "install:all": "pnpm install:common && pnpm install:client && pnpm install:server",
+    "clean": "pnpm --filter client clean && pnpm --filter server clean && pnpm --filter common clean",
+    "lint": "pnpm --filter client lint && pnpm --filter server lint",
+    "lint:fix": "pnpm --filter client lint:fix && pnpm --filter server lint:fix",
+    "type-check": "pnpm --filter client type-check && pnpm --filter server type-check",
     "docker:prod": "docker compose -f compose.yml up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
+    "eslint": "^9.29.0",
     "globals": "^16.2.0",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
   }
 }

@@ -55,8 +55,10 @@ export default function UsersPage() {
   };
 
   const handleDelete = (userId: string) => {
-    // 实现删除逻辑
-    console.log('Delete user:', userId);
+    // TODO: 实现删除逻辑
+    if (confirm('确定要删除此用户吗？')) {
+      // 实际删除逻辑
+    }
   };
 
   const handleAddNew = () => {

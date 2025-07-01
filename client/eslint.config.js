@@ -35,7 +35,6 @@ export default [
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
       
       // React 规则
       ...reactHooks.configs.recommended.rules,

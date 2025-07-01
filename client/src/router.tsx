@@ -83,10 +83,10 @@ export const router = createRouter({
 });
 
 // Register the router instance for type safety
+import { Outlet } from '@tanstack/react-router';
+
 declare module '@tanstack/react-router' {
   interface Register {
     router: typeof router;
   }
-}
-
-import { Outlet } from '@tanstack/react-router'; 
+} 

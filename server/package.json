@@ -21,7 +21,7 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
     "clean": "rimraf dist node_modules",
-    "db:seed": "tsx src/utils/seed.ts"
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
@@ -61,8 +61,11 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.35.0",
     "@typescript-eslint/parser": "^8.35.0",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "eslint": "^9.29.0",
     "jest": "^30.0.3",
+    "rimraf": "^6.0.1",
     "supertest": "^7.1.1",
     "ts-jest": "^29.4.0",
     "tsx": "^4.20.3",

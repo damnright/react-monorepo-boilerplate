@@ -148,9 +148,9 @@ async function start() {
 
     // 连接数据库并创建索引
     const { connectToDatabase, createIndexes, checkReplicaSetStatus } = await import('./config/database.js');
-    await connectToDatabase();
-    await createIndexes();
-    await checkReplicaSetStatus();
+    await connectToDatabase(fastify.log);
+    await createIndexes(fastify.log);
+    await checkReplicaSetStatus(fastify.log);
 
     // 启动服务器
     await fastify.listen({
@@ -158,12 +158,10 @@ async function start() {
       host: HOST,
     });
 
-    console.log(`
-🚀 Server is running!
-📄 Documentation: http://localhost:${PORT}/docs
-🎯 Health check: http://localhost:${PORT}/health
-🌍 Environment: ${process.env.NODE_ENV || 'development'}
-    `);
+    fastify.log.info(`🚀 Server is running on http://${HOST}:${PORT}`);
+    fastify.log.info(`📄 Documentation: http://localhost:${PORT}/docs`);
+    fastify.log.info(`🎯 Health check: http://localhost:${PORT}/health`);
+    fastify.log.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     fastify.log.error(error);
     process.exit(1);
@@ -174,14 +172,14 @@ async function start() {
 const signals = ['SIGINT', 'SIGTERM'];
 signals.forEach((signal) => {
   process.on(signal, async () => {
-    console.log(`\n收到 ${signal} 信号，正在优雅关闭服务器...`);
+    fastify.log.info(`\n收到 ${signal} 信号，正在优雅关闭服务器...`);
     
     try {
       await fastify.close();
-      console.log('✅ 服务器已关闭');
+      fastify.log.info('✅ 服务器已关闭');
       process.exit(0);
     } catch (error) {
-      console.error('❌ 关闭服务器时出错:', error);
+      fastify.log.error('❌ 关闭服务器时出错:', error);
       process.exit(1);
     }
   });
@@ -189,12 +187,12 @@ signals.forEach((signal) => {
 
 // 未处理的异常处理
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('未处理的 Promise 拒绝:', reason);
-  console.error('在:', promise);
+  fastify.log.error('未处理的 Promise 拒绝:', reason);
+  fastify.log.error('在:', promise);
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('未捕获的异常:', error);
+  fastify.log.error('未捕获的异常:', error);
   process.exit(1);
 });
 

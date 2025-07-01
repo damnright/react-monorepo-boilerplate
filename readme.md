@@ -88,12 +88,16 @@ react-monorepo-boilerplate/
 
 3. **环境配置**
    ```bash
-   # 复制环境变量模板
+   # 快速设置开发环境变量
+   pnpm setup:env
+   
+   # 或手动复制环境变量模板
+   cp client/.env.example client/.env
    cp server/.env.example server/.env
    
-   # 配置数据库连接和JWT密钥
-   # DATABASE_URL=mongodb://localhost:27017/ezboard
-   # JWT_SECRET=your-secret-key
+   # 配置关键设置（编辑 server/.env）
+   # DATABASE_URL=mongodb://localhost:27017/react-monorepo
+   # JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
    ```
 
 4. **数据库设置**
@@ -329,23 +333,26 @@ pnpm --filter client test:debug
 
 本项目需要配置环境变量文件才能正常运行。请按照以下步骤配置：
 
-## 1. 复制环境变量模板
+## 1. 快速设置环境变量
 
-### 根目录
+### 开发环境设置
 ```bash
-cp .env.example .env
-```
+# 一键设置开发环境变量（推荐）
+pnpm setup:env
 
-### 客户端
-```bash
+# 手动复制（可选）
 cp client/.env.example client/.env
-cp client/.env.example client/.env.production
+cp server/.env.example server/.env
 ```
 
-### 服务端
+### 生产环境设置
 ```bash
-cp server/.env.example server/.env
-cp server/.env.example server/.env.production
+# 设置生产环境变量
+pnpm setup:env:prod
+
+# 手动复制（可选）
+cp client/.env.production.example client/.env.production
+cp server/.env.production.example server/.env.production
 ```
 
 ## 2. 环境变量说明
@@ -354,14 +361,22 @@ cp server/.env.example server/.env.production
 ```bash
 # API配置
 VITE_API_URL=http://localhost:5055/api
+VITE_API_PROXY_TARGET=http://localhost:5055
+
+# 开发服务器配置
+VITE_PORT=5173
+VITE_HOST=localhost
 
 # 应用配置
-VITE_APP_TITLE=React Monorepo Boilerplate
-VITE_APP_VERSION=1.0.0
+VITE_APP_TITLE=全栈脚手架
+VITE_APP_DESCRIPTION=基于 React + Fastify + MongoDB 的现代化全栈解决方案
 
-# 开发配置
-VITE_PORT=5173
-VITE_API_PROXY_TARGET=http://localhost:5055
+# 功能开关
+VITE_ENABLE_DEVTOOLS=true
+VITE_ENABLE_MOCK=false
+
+# 调试配置
+VITE_LOG_LEVEL=debug
 ```
 
 ### Server 环境变量 (`server/.env`)
@@ -374,7 +389,7 @@ HOST=localhost
 # 数据库配置
 DATABASE_URL="mongodb://localhost:27017/react-monorepo"
 
-# JWT配置
+# JWT配置 - 生产环境请务必修改为安全的密钥
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=24h
 
@@ -384,8 +399,11 @@ CORS_ORIGIN=http://localhost:5173
 # 日志配置
 LOG_LEVEL=info
 
-# Sentry配置 (可选)
-# SENTRY_DSN=your-sentry-dsn
+# 功能开关
+ENABLE_SWAGGER=true
+
+# Sentry配置（可选）
+# SENTRY_DSN=your_sentry_dsn_here
 ```
 
 ## 3. 生产环境配置
@@ -396,8 +414,19 @@ LOG_LEVEL=info
 VITE_API_URL=https://your-api-domain.com/api
 
 # 应用配置
-VITE_APP_TITLE=React Monorepo Boilerplate
-VITE_APP_VERSION=1.0.0
+VITE_APP_TITLE=全栈脚手架
+VITE_APP_DESCRIPTION=基于 React + Fastify + MongoDB 的现代化全栈解决方案
+
+# 功能开关
+VITE_ENABLE_DEVTOOLS=false
+VITE_ENABLE_MOCK=false
+
+# 调试配置
+VITE_LOG_LEVEL=warn
+
+# Sentry配置（生产环境推荐配置）
+VITE_SENTRY_DSN=your_production_sentry_dsn_here
+VITE_SENTRY_ENVIRONMENT=production
 ```
 
 ### Server 生产环境 (`server/.env.production`)
@@ -410,7 +439,7 @@ HOST=0.0.0.0
 # 数据库配置
 DATABASE_URL="mongodb://your-mongo-host:27017/react-monorepo-prod"
 
-# JWT配置
+# JWT配置 - 生产环境请务必修改为安全的密钥
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=24h
 
@@ -420,8 +449,12 @@ CORS_ORIGIN=https://your-frontend-domain.com
 # 日志配置
 LOG_LEVEL=warn
 
-# Sentry配置 (推荐在生产环境使用)
-# SENTRY_DSN=your-sentry-dsn
+# 功能开关
+ENABLE_SWAGGER=false
+
+# Sentry配置（生产环境推荐配置）
+SENTRY_DSN=your_production_sentry_dsn_here
+SENTRY_ENVIRONMENT=production
 ```
 
 ## 4. 重要提醒
@@ -433,14 +466,20 @@ LOG_LEVEL=warn
 
 ## 5. 快速设置脚本
 
-如果你想快速设置开发环境，可以运行：
+项目提供了便捷的环境变量设置脚本：
 
 ```bash
-# 设置开发环境
-npm run setup:dev
+# 设置开发环境变量（推荐）
+pnpm setup:env
 
-# 设置生产环境
-npm run setup:prod
+# 仅设置客户端环境变量
+pnpm setup:env:client
+
+# 仅设置服务端环境变量  
+pnpm setup:env:server
+
+# 设置生产环境变量
+pnpm setup:env:prod
 ```
 
 ## 📞 联系方式

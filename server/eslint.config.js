@@ -30,7 +30,6 @@ export default [
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
       
       // Node.js 专用规则
       'no-console': 'off', // 服务端允许 console

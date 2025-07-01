@@ -6,11 +6,10 @@ import tsParser from '@typescript-eslint/parser';
 export default [
   js.configs.recommended,
   {
-    files: ['**/*.{js,mjs,cjs,ts,tsx}'],
+    files: ['**/*.{js,mjs,cjs,ts}'],
     languageOptions: {
       globals: {
         ...globals.node,
-        ...globals.browser,
       },
       parser: tsParser,
       parserOptions: {
@@ -33,13 +32,8 @@ export default [
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
-      
-      // 代码风格
       'prefer-const': 'error',
       'no-var': 'error',
-      'object-shorthand': 'error',
-      'prefer-arrow-callback': 'error',
     },
   },
   {
@@ -49,10 +43,12 @@ export default [
       'build/**',
       '**/*.d.ts',
       'coverage/**',
-      '.next/**',
-      '.nuxt/**',
       '.vscode/**',
       '.idea/**',
+      // 子项目有自己的eslint配置
+      'client/**',
+      'server/**',
+      'common/**',
     ],
   },
 ]; 
