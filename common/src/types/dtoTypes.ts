@@ -1,24 +1,8 @@
-/*
-* The reason why using classes instead of interfaces is to ensure that the fields of DTOs can be used for object mapping in api.
-*/
+/**
+ * 共享的数据传输对象(DTO)类型定义
+ * 使用Zod进行运行时验证和类型推导
+ */
 import { z } from 'zod';
-
-export class UserResDto {
-  id: string | undefined;
-  name: string = '';
-  email?: string = '';
-}
-
-export class UserReqDto {
-  id : string;
-  constructor(id: string) {
-    this.id = id;
-  }
-}
-
-export class HelloResDto {
-  message: string = '';
-}
 
 // Authentication DTOs
 export const LoginDTOSchema = z.object({
@@ -71,7 +55,12 @@ export type PaginationDTO = z.infer<typeof PaginationDTOSchema>;
 export type UserQueryDTO = z.infer<typeof UserQueryDTOSchema>;
 export type ActivityQueryDTO = z.infer<typeof ActivityQueryDTOSchema>;
 
-export class LogoutResDto {
-  message: string = '';
-}
+/**
+ * 通用响应DTO schemas
+ */
+export const MessageResponseSchema = z.object({
+  message: z.string(),
+});
+
+export type MessageResponse = z.infer<typeof MessageResponseSchema>;
 

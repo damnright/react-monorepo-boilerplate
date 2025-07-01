@@ -1,8 +1,10 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Static, Type } from '@sinclair/typebox';
-import bcrypt from 'bcrypt';
+import { Type } from '@sinclair/typebox';
 import { generateToken } from '../../utils/jwt.js';
 import { prisma } from '../../utils/prisma.js';
+import { verifyPassword } from '../../utils/password.js';
+import { createActivity, ActivityTypes } from '../../utils/activity.js';
+import { ErrorResponses, handleDatabaseError } from '../../utils/errors.js';
 import { LoginDTOSchema, ErrorCodes, HttpStatusCode, type LoginDTO, type AuthResponse } from 'common';
 
 const loginRoute: FastifyPluginAsync = async (fastify) => {
@@ -45,11 +47,8 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
       // 使用common包的schema验证
       try {
         LoginDTOSchema.parse(request.body);
-      } catch (error: any) {
-        return reply.status(HttpStatusCode.BAD_REQUEST).send({
-          error: ErrorCodes.INVALID_CREDENTIALS,
-          message: '请求参数错误',
-        });
+      } catch (_error) {
+        return ErrorResponses.validationError(reply, '请求参数错误');
       }
     },
     handler: async (request, reply) => {
@@ -87,7 +86,7 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         }
 
         // 验证密码
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await verifyPassword(password, user.password);
         if (!isPasswordValid) {
           return reply.status(HttpStatusCode.UNAUTHORIZED).send({
             error: ErrorCodes.INVALID_CREDENTIALS,
@@ -102,19 +101,11 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         );
 
         // 记录登录活动
-        await prisma.activity.create({
-          data: {
-            action: 'login',
-            userId: user.id,
-            description: '用户登录系统',
-            metadata: {
-              ip: request.ip,
-              userAgent: request.headers['user-agent'],
-            },
-            ipAddress: request.ip,
-            userAgent: request.headers['user-agent'],
-          },
-        });
+        await createActivity({
+          action: ActivityTypes.LOGIN,
+          userId: user.id,
+          description: '用户登录系统',
+        }, request);
 
         // 返回用户信息和token
         const { password: _, ...userWithoutPassword } = user;
@@ -133,12 +124,8 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         };
         
         return reply.send(response);
-      } catch (error) {
-        request.log.error(error);
-        return reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
-          error: ErrorCodes.INTERNAL_ERROR,
-          message: '服务器内部错误',
-        });
+      } catch (error: any) {
+        return handleDatabaseError(reply, request, error);
       }
     },
   });

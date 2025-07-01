@@ -1,7 +1,6 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   DialogTitle,
   DialogContent,
@@ -17,14 +16,10 @@ import {
   Box,
   Alert,
 } from '@mui/material';
-import { UpdateUserDTOSchema, type UserInfo, type UpdateUserDTO } from 'common';
-
-const userFormSchema = UpdateUserDTOSchema.extend({
-  email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string().min(6, '密码至少6位').optional(),
-});
-
-type UserFormData = z.infer<typeof userFormSchema>;
+import { PasswordField } from '@/components/ui/PasswordField';
+import { useFormError } from '@/hooks/useFormError';
+import { UserFormSchema, type UserFormData } from '@/schemas/formSchemas';
+import { type UserInfo } from 'common';
 
 interface UserFormProps {
   user?: UserInfo | null;
@@ -33,8 +28,7 @@ interface UserFormProps {
 }
 
 export function UserForm({ user, onSave, onClose }: UserFormProps) {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const { error, isLoading, executeAsync } = useFormError();
 
   const {
     register,
@@ -43,7 +37,7 @@ export function UserForm({ user, onSave, onClose }: UserFormProps) {
     watch,
     setValue,
   } = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
+    resolver: zodResolver(UserFormSchema),
     defaultValues: user
       ? {
           name: user.name,
@@ -58,16 +52,9 @@ export function UserForm({ user, onSave, onClose }: UserFormProps) {
   });
 
   const onSubmit = async (data: UserFormData) => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
+    await executeAsync(async () => {
       await onSave(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '保存失败');
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   const isEditing = !!user;
@@ -107,11 +94,10 @@ export function UserForm({ user, onSave, onClose }: UserFormProps) {
           />
 
           {!isEditing && (
-            <TextField
+            <PasswordField
               {...register('password')}
               fullWidth
               label="密码"
-              type="password"
               error={!!errors.password}
               helperText={errors.password?.message}
               margin="normal"

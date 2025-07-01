@@ -26,7 +26,7 @@ import {
   Logout,
   AccountCircle,
   Home,
-  Login,
+  // Login,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from '@tanstack/react-router';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,7 +45,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [authDialogTab, setAuthDialogTab] = useState<'login' | 'register'>('login');
   
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();

@@ -16,10 +16,4 @@ db.createUser({
   ]
 });
 
-// 创建基础集合和索引
-db.users.createIndex({ email: 1 }, { unique: true });
-db.users.createIndex({ createdAt: 1 });
-db.activities.createIndex({ userId: 1 });
-db.activities.createIndex({ createdAt: 1 });
-
-print('MongoDB 初始化完成'); 
+print('Database user created successfully'); 

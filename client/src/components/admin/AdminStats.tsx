@@ -19,7 +19,7 @@ import {
 import { Line } from 'react-chartjs-2';
 import { useQuery } from '@tanstack/react-query';
 import { adminAPI } from '@/lib/api';
-import type { StatsResponse, ChartResponse } from 'common';
+// import type { StatsResponse, ChartResponse } from 'common';
 
 ChartJS.register(
   CategoryScale,

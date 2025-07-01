@@ -1,12 +1,12 @@
-import bcrypt from 'bcrypt';
 import { prisma } from '../src/utils/prisma.js';
+import { hashPassword } from '../src/utils/password.js';
 
 async function main() {
   console.log('开始种子数据创建...');
 
   try {
     // 创建管理员用户
-    const adminPassword = await bcrypt.hash('admin123456', 12);
+    const adminPassword = await hashPassword('admin123456');
     const admin = await prisma.user.upsert({
       where: { email: 'admin@example.com' },
       update: {},
@@ -20,7 +20,7 @@ async function main() {
     });
 
     // 创建普通用户
-    const userPassword = await bcrypt.hash('user123456', 12);
+    const userPassword = await hashPassword('user123456');
     const user = await prisma.user.upsert({
       where: { email: 'user@example.com' },
       update: {},

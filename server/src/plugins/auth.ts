@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import { verifyToken, extractTokenFromHeader } from '../utils/jwt.js';
 import { prisma } from '../utils/prisma.js';
@@ -20,7 +20,7 @@ declare module 'fastify' {
 
 const authPlugin: FastifyPluginAsync = async (fastify) => {
   // 认证装饰器
-  fastify.decorate('authenticate', async function (request, reply) {
+  fastify.decorate('authenticate', async (request, reply) => {
     try {
       const token = extractTokenFromHeader(request.headers.authorization);
       
@@ -64,7 +64,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
           email: user.email,
           role: user.role.toLowerCase() as 'user' | 'admin',
         };
-    } catch (error) {
+    } catch (_error) {
       return reply.status(401).send({
         error: 'INVALID_TOKEN',
         message: '无效的访问令牌',
@@ -73,7 +73,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
   });
 
   // 角色权限装饰器
-  fastify.decorate('requireRole', function (requiredRole: 'admin' | 'user') {
+  fastify.decorate('requireRole', (requiredRole: 'admin' | 'user') => {
     return async function (request, reply) {
       if (request.user.role !== requiredRole) {
         return reply.status(403).send({

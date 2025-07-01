@@ -1,9 +1,11 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Static, Type } from '@sinclair/typebox';
-import bcrypt from 'bcrypt';
+import { Type } from '@sinclair/typebox';
 import { generateToken } from '../../utils/jwt.js';
 import { prisma } from '../../utils/prisma.js';
-import { RegisterDTOSchema, ErrorCodes, HttpStatusCode, type RegisterDTO, type AuthResponse } from 'common';
+import { hashPassword } from '../../utils/password.js';
+import { createActivityInTransaction, ActivityTypes } from '../../utils/activity.js';
+import { ErrorResponses, handleDatabaseError } from '../../utils/errors.js';
+import { RegisterDTOSchema, HttpStatusCode, type RegisterDTO, type AuthResponse } from 'common';
 
 const registerRoute: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: RegisterDTO }>('/register', {
@@ -45,11 +47,8 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
       // 使用common包的schema验证
       try {
         RegisterDTOSchema.parse(request.body);
-      } catch (error: any) {
-        return reply.status(HttpStatusCode.BAD_REQUEST).send({
-          error: ErrorCodes.INVALID_CREDENTIALS,
-          message: '请求参数错误',
-        });
+      } catch (_error) {
+        return ErrorResponses.validationError(reply, '请求参数错误');
       }
     },
     handler: async (request, reply) => {
@@ -68,7 +67,7 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
           }
 
           // 加密密码
-          const hashedPassword = await bcrypt.hash(password, 12);
+          const hashedPassword = await hashPassword(password);
 
           // 创建用户
           const user = await tx.user.create({
@@ -90,19 +89,11 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
           });
 
           // 记录注册活动
-          await tx.activity.create({
-            data: {
-              action: 'register',
-              userId: user.id,
-              description: '新用户注册',
-              metadata: {
-                ip: request.ip,
-                userAgent: request.headers['user-agent'],
-              },
-              ipAddress: request.ip,
-              userAgent: request.headers['user-agent'],
-            },
-          });
+          await createActivityInTransaction(tx, {
+            action: ActivityTypes.REGISTER,
+            userId: user.id,
+            description: '新用户注册',
+          }, request);
 
           return user;
         });
@@ -129,19 +120,7 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
 
         return reply.status(HttpStatusCode.CREATED).send(response);
       } catch (error: any) {
-        request.log.error(error);
-
-        if (error.message === 'EMAIL_EXISTS') {
-          return reply.status(HttpStatusCode.CONFLICT).send({
-            error: ErrorCodes.INVALID_CREDENTIALS,
-            message: '该邮箱已被注册',
-          });
-        }
-
-        return reply.status(HttpStatusCode.INTERNAL_SERVER_ERROR).send({
-          error: ErrorCodes.INTERNAL_ERROR,
-          message: '服务器内部错误',
-        });
+        return handleDatabaseError(reply, request, error);
       }
     },
   });

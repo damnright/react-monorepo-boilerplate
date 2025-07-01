@@ -9,8 +9,7 @@ import type {
   PaginatedResponse,
   StatsResponse,
   SystemInfoResponse,
-  ChartResponse,
-  ApiResponse
+  ChartResponse
 } from 'common';
 
 // 创建axios实例
@@ -33,19 +32,13 @@ api.interceptors.request.use(
   }
 );
 
-// 响应拦截器
+// 响应拦截器 - 移除直接的认证处理，交给useAuth处理
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // 统一错误处理
-    if (error.response?.status === 401) {
-      // Token过期或无效，清除本地存储
-      localStorage.removeItem('auth-storage');
-      window.location.href = '/auth/login';
-    }
-
+    // 401错误由useAuth hook统一处理，这里只传递错误
     return Promise.reject(error);
   }
 );

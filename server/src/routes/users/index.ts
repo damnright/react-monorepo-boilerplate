@@ -1,7 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { Static, Type } from '@sinclair/typebox';
-import bcrypt from 'bcrypt';
 import { prisma } from '../../utils/prisma.js';
+import { hashPassword } from '../../utils/password.js';
+import { createActivityInTransaction, createActivity, ActivityTypes } from '../../utils/activity.js';
 
 const CreateUserSchema = Type.Object({
   name: Type.String({ minLength: 2, maxLength: 50 }),
@@ -214,7 +215,7 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
           }
 
           // 加密密码
-          const hashedPassword = await bcrypt.hash(password, 12);
+          const hashedPassword = await hashPassword(password);
 
           // 创建用户
           const user = await tx.user.create({
@@ -238,20 +239,12 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
           });
 
           // 记录活动
-          await tx.activity.create({
-            data: {
-              action: 'create_user',
-              userId: request.user.userId,
-              description: `管理员创建用户: ${user.name}`,
-              metadata: {
-                targetUserId: user.id,
-                ip: request.ip,
-                userAgent: request.headers['user-agent'],
-              },
-              ipAddress: request.ip,
-              userAgent: request.headers['user-agent'],
-            },
-          });
+          await createActivityInTransaction(tx, {
+            action: ActivityTypes.CREATE_USER,
+            userId: request.user.userId,
+            description: `管理员创建用户: ${user.name}`,
+            targetUserId: user.id,
+          }, request);
 
           return user;
         });
@@ -344,21 +337,13 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
         });
 
         // 记录活动
-        await prisma.activity.create({
-          data: {
-            action: 'update_user',
-            userId: request.user.userId,
-            description: `用户信息更新: ${user.name}`,
-            metadata: {
-              targetUserId: user.id,
-              changes: updateData,
-              ip: request.ip,
-              userAgent: request.headers['user-agent'],
-            },
-            ipAddress: request.ip,
-            userAgent: request.headers['user-agent'],
-          },
-        });
+        await createActivity({
+          action: ActivityTypes.UPDATE_USER,
+          userId: request.user.userId,
+          description: `用户信息更新: ${user.name}`,
+          targetUserId: user.id,
+          metadata: { changes: updateData },
+        }, request);
 
         return reply.send({
           ...user,

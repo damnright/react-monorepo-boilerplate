@@ -104,8 +104,8 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
             totalPages,
           },
         });
-      } catch (error) {
-        request.log.error(error);
+      } catch (_error: any) {
+        request.log.error(_error);
         return reply.status(500).send({
           error: 'INTERNAL_ERROR',
           message: '获取活动日志失败',
@@ -158,7 +158,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         
         // 测试数据库连接
         let dbStatus = 'connected';
-        let dbVersion = 'unknown';
+        const dbVersion = 'unknown';
         
         try {
           // MongoDB doesn't have a version() function like SQL databases

@@ -126,9 +126,9 @@ async function start() {
     await fastify.register(import('./routes/users/index.js'), { prefix: '/api/users' });
     await fastify.register(import('./routes/admin/index.js'), { prefix: '/api/admin' });
 
-    // 连接数据库并创建索引
-    const { connectToDatabase, createIndexes, checkReplicaSetStatus } = await import('./config/database.js');
-    await connectToDatabase(fastify.log);
+    // 测试数据库连接并创建索引
+    const { testDatabaseConnection, createIndexes, checkReplicaSetStatus } = await import('./utils/database.js');
+    await testDatabaseConnection(fastify.log);
     await createIndexes(fastify.log);
     await checkReplicaSetStatus(fastify.log);
 

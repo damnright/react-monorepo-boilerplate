@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { api, authAPI } from '@/lib/api';
+import { authAPI } from '@/lib/api';
+import { setAuthToken, clearAuth } from '@/utils/auth';
 import React from 'react';
 import type { UserInfo, LoginDTO, RegisterDTO } from 'common';
 
@@ -47,8 +48,8 @@ const useAuthStore = create<AuthState & AuthActions>()(
             error: null,
           });
 
-          // 设置API默认header
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // 设置API认证token
+          setAuthToken(token);
         } catch (error: any) {
           set({
             isLoading: false,
@@ -73,8 +74,8 @@ const useAuthStore = create<AuthState & AuthActions>()(
             error: null,
           });
 
-          // 设置API默认header
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // 设置API认证token
+          setAuthToken(token);
         } catch (error: any) {
           set({
             isLoading: false,
@@ -85,8 +86,8 @@ const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       logout: () => {
-        // 清除API header
-        delete api.defaults.headers.common['Authorization'];
+        // 清除认证信息
+        clearAuth();
         
         set({
           user: null,
@@ -110,8 +111,8 @@ const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true });
 
         try {
-          // 设置API header
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // 设置API认证token
+          setAuthToken(token);
           
           const response = await authAPI.me();
           const user = response.data;
@@ -122,8 +123,9 @@ const useAuthStore = create<AuthState & AuthActions>()(
             isLoading: false,
             error: null,
           });
-        } catch (error) {
+        } catch (_error) {
           // Token无效，清除认证状态
+          clearAuth();
           set({
             user: null,
             token: null,
@@ -131,7 +133,6 @@ const useAuthStore = create<AuthState & AuthActions>()(
             isLoading: false,
             error: null,
           });
-          delete api.defaults.headers.common['Authorization'];
         }
       },
 
@@ -160,7 +161,7 @@ export const useAuth = () => {
   React.useEffect(() => {
     const { token } = authState;
     if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setAuthToken(token);
     }
     authState.checkAuth();
   }, []);

@@ -1,57 +1,43 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Box,
   TextField,
   Button,
   Alert,
   InputAdornment,
-  IconButton,
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-import { Visibility, VisibilityOff, Email, Lock, Person } from '@mui/icons-material';
+import { Email, Person } from '@mui/icons-material';
 import { useAuth } from '@/hooks/useAuth';
-import { RegisterDTOSchema, type RegisterDTO } from 'common';
-
-const registerFormSchema = RegisterDTOSchema.extend({
-  confirmPassword: z.string(),
-  agreeToTerms: z.boolean().refine((val) => val === true, {
-    message: '请同意服务条款',
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: '两次输入的密码不一致',
-  path: ['confirmPassword'],
-});
-
-type RegisterFormData = z.infer<typeof registerFormSchema>;
+import { useFormError } from '@/hooks/useFormError';
+import { PasswordField } from '@/components/ui/PasswordField';
+import { RegisterFormSchema, type RegisterFormData } from '@/schemas/formSchemas';
+import { type RegisterDTO } from 'common';
 
 export function RegisterForm() {
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
-  const { register: registerUser, isLoading, error } = useAuth();
+  const { register: registerUser } = useAuth();
+  const { error, isLoading, executeAsync } = useFormError();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerFormSchema),
+    resolver: zodResolver(RegisterFormSchema),
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    try {
+    await executeAsync(async () => {
       const registerData: RegisterDTO = {
         name: data.name,
         email: data.email,
         password: data.password,
       };
       await registerUser(registerData);
-    } catch (err) {
-      // 错误处理由useAuth hook处理
-    }
+    });
   };
 
   return (
@@ -95,58 +81,22 @@ export function RegisterForm() {
         }}
       />
 
-      <TextField
+      <PasswordField
         {...register('password')}
         fullWidth
         label="密码"
-        type={showPassword ? 'text' : 'password'}
         error={!!errors.password}
         helperText={errors.password?.message}
         margin="normal"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Lock />
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={() => setShowPassword(!showPassword)}
-                edge="end"
-              >
-                {showPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
       />
 
-      <TextField
+      <PasswordField
         {...register('confirmPassword')}
         fullWidth
         label="确认密码"
-        type={showConfirmPassword ? 'text' : 'password'}
         error={!!errors.confirmPassword}
         helperText={errors.confirmPassword?.message}
         margin="normal"
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Lock />
-            </InputAdornment>
-          ),
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                edge="end"
-              >
-                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
       />
 
       <FormControlLabel
