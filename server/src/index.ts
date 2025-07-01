@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname } from 'path';
 import dotenv from 'dotenv';
 
 // 加载环境变量
@@ -125,26 +125,6 @@ async function start() {
     await fastify.register(import('./routes/auth/index.js'), { prefix: '/api/auth' });
     await fastify.register(import('./routes/users/index.js'), { prefix: '/api/users' });
     await fastify.register(import('./routes/admin/index.js'), { prefix: '/api/admin' });
-
-    // 静态文件服务（生产环境）
-    if (process.env.NODE_ENV === 'production') {
-      await fastify.register(import('@fastify/static'), {
-        root: join(__dirname, '../../client/dist'),
-        prefix: '/',
-      });
-
-      // SPA 回退
-      fastify.setNotFoundHandler((request, reply) => {
-        if (request.url.startsWith('/api/')) {
-          reply.status(404).send({
-            error: 'NOT_FOUND',
-            message: 'API endpoint not found',
-          });
-        } else {
-          reply.sendFile('index.html');
-        }
-      });
-    }
 
     // 连接数据库并创建索引
     const { connectToDatabase, createIndexes, checkReplicaSetStatus } = await import('./config/database.js');

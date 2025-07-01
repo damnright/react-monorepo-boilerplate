@@ -4,7 +4,8 @@
 
 # ----------- Stage 1: 基础环境 -----------
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@9.15.2
+RUN apk add --no-cache curl && \
+    npm install -g pnpm@9.15.2
 WORKDIR /app
 
 # ----------- Stage 2: 安装依赖 -----------
@@ -52,14 +53,12 @@ COPY server/ ./server/
 RUN pnpm --filter server build
 
 # ----------- Stage 6: 生产环境运行时 -----------
-FROM node:20-alpine AS production
-RUN npm install -g pnpm@9.15.2
-WORKDIR /app
+FROM base AS production
 
 # 设置环境变量
-ENV NODE_ENV=production
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV NODE_ENV=production \
+    PNPM_HOME="/pnpm" \
+    PATH="$PNPM_HOME:$PATH"
 
 # 复制package.json文件
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
@@ -70,15 +69,16 @@ COPY server/package.json ./server/
 RUN pnpm install --prod --frozen-lockfile
 
 # 复制构建产物
-COPY --from=common-build /app/common/dist ./common/dist
-COPY --from=server-build /app/server/dist ./server/dist
+COPY --from=common-build --chown=fastify:nodejs /app/common/dist ./common/dist
+COPY --from=server-build --chown=fastify:nodejs /app/server/dist ./server/dist
 
 # 复制server配置文件
-COPY server/prisma ./server/prisma
+COPY --chown=fastify:nodejs server/prisma ./server/prisma
 
 # 创建非root用户
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S fastify -u 1001
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S fastify -u 1001 -G nodejs && \
+    chown -R fastify:nodejs /app
 USER fastify
 
 # 暴露端口
@@ -86,7 +86,7 @@ EXPOSE 5055
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5055/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD curl -f http://localhost:5055/health || exit 1
 
 # 启动命令
 CMD ["node", "server/dist/index.js"]
@@ -96,6 +96,6 @@ FROM nginx:alpine AS nginx
 # 复制前端构建产物
 COPY --from=client-build /app/client/dist /usr/share/nginx/html
 # 删除nginx默认配置
-RUN rm /etc/nginx/conf.d/default.conf
+RUN rm -f /etc/nginx/conf.d/default.conf
 # 暴露端口
 EXPOSE 80 443 
