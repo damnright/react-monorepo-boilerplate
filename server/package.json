@@ -11,6 +11,7 @@
     "build:alone": "tsc -p tsconfig.json",
     "build": "pnpm --filter common build && tsc -p tsconfig.json",
     "dev": "concurrently --raw \"pnpm --filter common watch\" \"cross-env NODE_ENV=development tsx watch src/index.ts\"",
+    "dev:alone": "cross-env NODE_ENV=development tsx watch src/index.ts",
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts --fix",
     "type-check": "tsc --noEmit",

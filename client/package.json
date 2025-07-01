@@ -9,7 +9,7 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "dev": "concurrently \"pnpm --filter common watch\" \"pnpm run dev:alone\"",
+    "dev": "concurrently \"pnpm --filter common watch\" \"pnpm --filter common watch\" \"pnpm run dev:alone\"",
     "dev:alone": "vite",
     "build": "pnpm --filter common build && pnpm run build:alone",
     "build:alone": "cross-env NODE_ENV=production vite build",
