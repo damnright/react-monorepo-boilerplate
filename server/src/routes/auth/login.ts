@@ -52,7 +52,7 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
             password: true,
             role: true,
             avatar: true,
-            status: true,
+            isActive: true,
             createdAt: true,
           },
         });
@@ -65,7 +65,7 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
         }
 
         // 检查账户状态
-        if (user.status !== 'active') {
+        if (!user.isActive) {
           return reply.status(401).send({
             error: 'ACCOUNT_DISABLED',
             message: '账户已被禁用',
@@ -83,20 +83,22 @@ const loginRoute: FastifyPluginAsync = async (fastify) => {
 
         // 生成JWT token
         const token = generateToken(
-          { userId: user.id, email: user.email, role: user.role },
+          { userId: user.id, email: user.email, role: user.role.toLowerCase() as 'user' | 'admin' },
           rememberMe ? '30d' : '24h'
         );
 
         // 记录登录活动
         await prisma.activity.create({
           data: {
-            type: 'login',
+            action: 'login',
             userId: user.id,
             description: '用户登录系统',
             metadata: {
               ip: request.ip,
               userAgent: request.headers['user-agent'],
             },
+            ipAddress: request.ip,
+            userAgent: request.headers['user-agent'],
           },
         });
 

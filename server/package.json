@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "server",
   "version": "1.0.0",
   "packageManager": "pnpm@9.15.2",
   "engines": {
@@ -7,10 +7,10 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "start": "pnpm --filter @fullstack/common build && pnpm run build && cross-env NODE_ENV=production node dist/index.js",
+    "start": "pnpm --filter common build && pnpm run build && cross-env NODE_ENV=production node dist/index.js",
     "build:alone": "tsc -p tsconfig.json",
-    "build": "pnpm --filter @fullstack/common build && tsc -p tsconfig.json",
-    "dev": "concurrently --raw \"pnpm --filter @fullstack/common watch\" \"cross-env NODE_ENV=development tsx watch src/index.ts\"",
+    "build": "pnpm --filter common build && tsc -p tsconfig.json",
+    "dev": "concurrently --raw \"pnpm --filter common watch\" \"cross-env NODE_ENV=development tsx watch src/index.ts\"",
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts --fix",
     "type-check": "tsc --noEmit",
@@ -20,7 +20,7 @@
     "db:migrate:prod": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
-    "clean": "rm -rf dist node_modules/.cache",
+    "clean": "rimraf dist node_modules",
     "db:seed": "tsx src/utils/seed.ts"
   },
   "dependencies": {
@@ -36,7 +36,7 @@
     "@prisma/client": "^6.10.1",
     "@sentry/node": "^9.31.0",
     "@sentry/profiling-node": "^9.31.0",
-    "@sinclair/typebox": "^0.35.7",
+    "@sinclair/typebox": "^0.34.37",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.10.0",

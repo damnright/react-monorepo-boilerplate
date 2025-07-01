@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import { prisma } from '../utils/prisma.js';

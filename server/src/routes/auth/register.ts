@@ -62,8 +62,8 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
               name,
               email,
               password: hashedPassword,
-              role: 'user', // 默认角色
-              status: 'active',
+              role: 'USER', // 默认角色
+              isActive: true,
             },
             select: {
               id: true,
@@ -78,13 +78,15 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
           // 记录注册活动
           await tx.activity.create({
             data: {
-              type: 'register',
+              action: 'register',
               userId: user.id,
               description: '新用户注册',
               metadata: {
                 ip: request.ip,
                 userAgent: request.headers['user-agent'],
               },
+              ipAddress: request.ip,
+              userAgent: request.headers['user-agent'],
             },
           });
 
@@ -95,7 +97,7 @@ const registerRoute: FastifyPluginAsync = async (fastify) => {
         const token = generateToken({
           userId: result.id,
           email: result.email,
-          role: result.role,
+          role: result.role.toLowerCase() as 'user' | 'admin',
         });
 
         return reply.status(201).send({

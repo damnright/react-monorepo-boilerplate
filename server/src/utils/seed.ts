@@ -17,7 +17,7 @@ async function main() {
         name: '系统管理员',
         password: adminPassword,
         role: 'ADMIN',
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
 
@@ -31,7 +31,7 @@ async function main() {
         name: '普通用户',
         password: userPassword,
         role: 'USER',
-        status: 'ACTIVE',
+        isActive: true,
       },
     });
 
@@ -39,31 +39,37 @@ async function main() {
     await prisma.activity.createMany({
       data: [
         {
-          type: 'register',
+          action: 'register',
           description: '管理员账户注册',
           userId: admin.id,
           metadata: {
             ip: '127.0.0.1',
             userAgent: 'Seed Script',
           },
+          ipAddress: '127.0.0.1',
+          userAgent: 'Seed Script',
         },
         {
-          type: 'register',
+          action: 'register',
           description: '用户账户注册',
           userId: user.id,
           metadata: {
             ip: '127.0.0.1',
             userAgent: 'Seed Script',
           },
+          ipAddress: '127.0.0.1',
+          userAgent: 'Seed Script',
         },
         {
-          type: 'login',
+          action: 'login',
           description: '管理员登录系统',
           userId: admin.id,
           metadata: {
             ip: '127.0.0.1',
             userAgent: 'Seed Script',
           },
+          ipAddress: '127.0.0.1',
+          userAgent: 'Seed Script',
         },
       ],
     });

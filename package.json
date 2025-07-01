@@ -2,11 +2,6 @@
   "name": "react-monorepo-boilerplate",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "client",
-    "server",
-    "common"
-  ],
   "engines": {
     "node": ">=20.19.0",
     "pnpm": ">=9.0.0"
@@ -24,13 +19,14 @@
     "install:server": "pnpm --filter server install",
     "install:client": "pnpm --filter client install",
     "install:common": "pnpm --filter common install",
-    "install": "pnpm install",
+    "install:all": "pnpm install:common && pnpm install:client && pnpm install:server",
     "docker:prod": "docker compose -f compose.yml up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "rimraf": "^6.0.1"
   }
 }

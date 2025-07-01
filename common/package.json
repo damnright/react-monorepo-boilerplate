@@ -1,5 +1,5 @@
 {
-  "name": "@fullstack/common",
+  "name": "common",
   "type": "module",
   "packageManager": "pnpm@9.15.2",
   "engines": {

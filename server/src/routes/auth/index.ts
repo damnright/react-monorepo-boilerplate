@@ -27,13 +27,15 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         // 记录登出活动
         await fastify.prisma.activity.create({
           data: {
-            type: 'logout',
+            action: 'logout',
             userId: request.user.userId,
             description: '用户登出系统',
             metadata: {
               ip: request.ip,
               userAgent: request.headers['user-agent'],
             },
+            ipAddress: request.ip,
+            userAgent: request.headers['user-agent'],
           },
         });
 

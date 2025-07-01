@@ -88,7 +88,7 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
               name: true,
               email: true,
               role: true,
-              status: true,
+              isActive: true,
               avatar: true,
               createdAt: true,
               updatedAt: true,
@@ -157,7 +157,7 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
             name: true,
             email: true,
             role: true,
-            status: true,
+            isActive: true,
             avatar: true,
             createdAt: true,
             updatedAt: true,
@@ -218,19 +218,19 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
 
           // 创建用户
           const user = await tx.user.create({
-            data: {
-              name,
-              email,
-              password: hashedPassword,
-              role,
-              status,
-            },
+                          data: {
+                name,
+                email,
+                password: hashedPassword,
+                role: role === 'user' ? 'USER' : role === 'admin' ? 'ADMIN' : 'USER',
+                isActive: status === 'active',
+              },
             select: {
               id: true,
               name: true,
               email: true,
               role: true,
-              status: true,
+              isActive: true,
               avatar: true,
               createdAt: true,
               updatedAt: true,
@@ -240,7 +240,7 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
           // 记录活动
           await tx.activity.create({
             data: {
-              type: 'create_user',
+              action: 'create_user',
               userId: request.user.userId,
               description: `管理员创建用户: ${user.name}`,
               metadata: {
@@ -248,6 +248,8 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
                 ip: request.ip,
                 userAgent: request.headers['user-agent'],
               },
+              ipAddress: request.ip,
+              userAgent: request.headers['user-agent'],
             },
           });
 
@@ -312,15 +314,29 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
           delete updateData.status;
         }
 
+        // 转换数据格式以匹配Prisma schema
+        const transformedData: any = { ...updateData };
+        
+        // 转换role字段
+        if (updateData.role) {
+          transformedData.role = updateData.role === 'user' ? 'USER' : updateData.role === 'admin' ? 'ADMIN' : 'USER';
+        }
+        
+        // 转换status字段为isActive
+        if (updateData.status) {
+          transformedData.isActive = updateData.status === 'active';
+          delete transformedData.status;
+        }
+
         const user = await prisma.user.update({
           where: { id },
-          data: updateData,
+          data: transformedData,
           select: {
             id: true,
             name: true,
             email: true,
             role: true,
-            status: true,
+            isActive: true,
             avatar: true,
             createdAt: true,
             updatedAt: true,
@@ -330,7 +346,7 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
         // 记录活动
         await prisma.activity.create({
           data: {
-            type: 'update_user',
+            action: 'update_user',
             userId: request.user.userId,
             description: `用户信息更新: ${user.name}`,
             metadata: {
@@ -339,6 +355,8 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
               ip: request.ip,
               userAgent: request.headers['user-agent'],
             },
+            ipAddress: request.ip,
+            userAgent: request.headers['user-agent'],
           },
         });
 
@@ -413,7 +431,7 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
           // 记录活动
           await tx.activity.create({
             data: {
-              type: 'delete_user',
+              action: 'delete_user',
               userId: request.user.userId,
               description: `管理员删除用户: ${user.name} (${user.email})`,
               metadata: {
@@ -421,6 +439,8 @@ const usersRoute: FastifyPluginAsync = async (fastify) => {
                 ip: request.ip,
                 userAgent: request.headers['user-agent'],
               },
+              ipAddress: request.ip,
+              userAgent: request.headers['user-agent'],
             },
           });
         });

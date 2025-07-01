@@ -40,7 +40,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
           id: true,
           email: true,
           role: true,
-          status: true,
+          isActive: true,
         },
       });
 
@@ -51,7 +51,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      if (user.status !== 'active') {
+      if (!user.isActive) {
         return reply.status(401).send({
           error: 'ACCOUNT_DISABLED',
           message: '账户已被禁用',
@@ -59,11 +59,11 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
       }
 
       // 将用户信息附加到请求对象
-      request.user = {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      };
+              request.user = {
+          userId: user.id,
+          email: user.email,
+          role: user.role.toLowerCase() as 'user' | 'admin',
+        };
     } catch (error) {
       return reply.status(401).send({
         error: 'INVALID_TOKEN',

@@ -13,7 +13,7 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
           email: Type.String(),
           role: Type.Union([Type.Literal('admin'), Type.Literal('user')]),
           avatar: Type.Optional(Type.String()),
-          status: Type.Union([Type.Literal('active'), Type.Literal('inactive')]),
+          isActive: Type.Boolean(),
           createdAt: Type.String(),
           updatedAt: Type.String(),
         }),
@@ -33,7 +33,7 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
             email: true,
             role: true,
             avatar: true,
-            status: true,
+            isActive: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -46,7 +46,7 @@ const meRoute: FastifyPluginAsync = async (fastify) => {
           });
         }
 
-        if (user.status !== 'active') {
+        if (!user.isActive) {
           return reply.status(401).send({
             error: 'ACCOUNT_DISABLED',
             message: '账户已被禁用',

@@ -161,7 +161,9 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         let dbVersion = 'unknown';
         
         try {
-          await fastify.prisma.$queryRaw`SELECT version()`;
+          // MongoDB doesn't have a version() function like SQL databases
+          // We'll use a simple ping operation instead
+          await fastify.prisma.$runCommandRaw({ ping: 1 });
           dbStatus = 'connected';
         } catch (error) {
           dbStatus = 'disconnected';

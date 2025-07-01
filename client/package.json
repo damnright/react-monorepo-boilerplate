@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "client",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -9,11 +9,11 @@
     "pnpm": ">=9.0.0"
   },
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @fullstack/common watch\" \"pnpm run dev:alone\"",
+    "dev": "concurrently \"pnpm --filter common watch\" \"pnpm run dev:alone\"",
     "dev:alone": "vite",
-    "build": "pnpm --filter @fullstack/common build && pnpm run build:alone",
+    "build": "pnpm --filter common build && pnpm run build:alone",
     "build:alone": "cross-env NODE_ENV=production vite build",
-    "preview": "pnpm --filter @fullstack/common build && vite preview",
+    "preview": "pnpm --filter common build && vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "type-check": "tsc --noEmit",
@@ -22,7 +22,7 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report",
-    "clean": "rm -rf dist node_modules/.vite test-results playwright-report"
+    "clean": "rimraf dist node_modules test-results playwright-report"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",

@@ -15,10 +15,17 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 // 创建 Fastify 实例
 const fastify = Fastify({
-  logger: {
-    level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-    prettyPrint: process.env.NODE_ENV !== 'production',
-  },
+  logger: process.env.NODE_ENV === 'production' 
+    ? { level: 'info' }
+    : {
+        level: 'debug',
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: true
+          }
+        }
+      },
   trustProxy: true,
 });
 

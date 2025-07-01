@@ -56,8 +56,8 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
           recentActivities,
         ] = await Promise.all([
           prisma.user.count(),
-          prisma.user.count({ where: { status: 'active' } }),
-          prisma.user.count({ where: { role: 'admin' } }),
+          prisma.user.count({ where: { isActive: true } }),
+          prisma.user.count({ where: { role: 'ADMIN' } }),
           prisma.user.count({
             where: {
               createdAt: {
@@ -67,7 +67,7 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
           }),
           prisma.activity.count({
             where: {
-              type: 'login',
+              action: 'login',
               createdAt: {
                 gte: todayStart,
               },
@@ -75,7 +75,7 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
           }),
           prisma.activity.count({
             where: {
-              type: 'register',
+              action: 'register',
               createdAt: {
                 gte: todayStart,
               },
@@ -112,7 +112,7 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
             todayRegistrations,
             recentActivities: recentActivities.map(activity => ({
               id: activity.id,
-              type: activity.type,
+              type: activity.action,
               description: activity.description,
               user: activity.user,
               createdAt: activity.createdAt.toISOString(),
@@ -246,7 +246,7 @@ const statsRoute: FastifyPluginAsync = async (fastify) => {
               
               return prisma.activity.count({
                 where: {
-                  type: 'login',
+                  action: 'login',
                   createdAt: {
                     gte: startOfDay,
                     lt: endOfDay,
